@@ -19,9 +19,34 @@ const Signup = () => {
 
   const password = watch('password');
 
-  const onSubmit = (data) => {
+  /*const onSubmit = (data) => {
     console.log('Signup data:', data);
-  };
+  };*/
+  const onSubmit = async (data) => {
+  try {
+    const response = await fetch('http://127.0.0.1:8000/api/auth/signup/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: data.name,
+        email: data.email,
+        password: data.password 
+      })
+    });
+
+    const result = await response.json();
+    if (response.ok) {
+      console.log('Signup successful:', result);
+      // Optionally redirect or show success message
+    } else {
+      console.error('Signup error:', result);
+    }
+  } catch (error) {
+    console.error('Network error:', error);
+  }
+};
 
   return (
     <Box

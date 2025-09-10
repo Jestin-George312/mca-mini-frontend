@@ -10,8 +10,39 @@ const Login = () => {
     }
   });
 
-  const onSubmit = (data) => {
+  /*const onSubmit = (data) => {
     console.log('Login data:', data);
+  };*/
+
+   const onSubmit = async (data) => {
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: data.email,
+          password: data.password
+        })
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        console.log('Login successful:', result);
+
+        // Save tokens
+        localStorage.setItem('access', result.access);
+        localStorage.setItem('refresh', result.refresh);
+
+        // Optional: redirect after login
+         window.location.href = "/dashboard";
+      } else {
+        console.error('Login error:', result);
+      }
+    } catch (error) {
+      console.error('Network error:', error);
+    }
   };
 
   return (
@@ -29,7 +60,7 @@ const Login = () => {
         </Typography>
 
         <Stack spacing={2}>
-          <TextField label="Email" type="email" fullWidth  autoComplete="email"{...register('email', { required: 'Email is required' })}
+          <TextField label="Email" type="text" fullWidth  autoComplete="email"{...register('email', { required: 'Email is required' })}
             error={!!errors.email}
             helperText={errors.email?.message}
           />
