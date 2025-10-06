@@ -7,9 +7,12 @@ import Drawer from '@mui/material/Drawer'
 import Button from '@mui/material/Button'
 import { Box } from '@mui/material'
 import {useTheme} from '@mui/material/styles'
+import { useNavigate } from 'react-router-dom'
 
 
 const splash_navbar = () => {
+  const navigate = useNavigate();
+
   const theme=useTheme()
   return (
     <div>
@@ -23,10 +26,10 @@ const splash_navbar = () => {
             <Button variant="contained" color="success"   href='#home'>
              home
            </Button>
-           <Button variant="contained" color="success" href='#login'>
+           <Button variant="contained" color="success" onClick={()=>navigate('/login')} >
              Login
            </Button>
-            <Button variant="contained" color="success" href='#signup'>
+            <Button variant="contained" color="success" onClick={()=>navigate('/signup')} >
              Signup
            </Button>
            <Button variant="contained" color="success" href='#signup'>

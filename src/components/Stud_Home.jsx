@@ -33,27 +33,25 @@ const Stud_Home = () => {
 
     ]      
   return (
-     <Container id='stud_home' disableGutters sx={{marginTop:5}}>
-       <Grid container spacing={3}> 
-   {Perks.map((feature)=>(
-       <Grid item xs={12}  sm={6} md={4}>
-           <Card sx={{ minWidth: 275 }}>
-              <CardContent>
-                <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
-                          {feature.head}
-                        </Typography>
-                        <Typography variant="h5" component="div">
-                         {feature.num}
-                        </Typography>
-                        <Typography sx={{ color: 'text.secondary', mb: 1.5 }}>{feature.improve}</Typography>
-                        {feature.icon}
-              </CardContent>
-           </Card>
+     <Container id='stud_home' maxWidth="lg" sx={{ mt: 4 }}>
+       <Grid container spacing={3} alignItems="stretch"> 
+         {Perks.map((feature) => (
+           <Grid key={feature.head} item xs={12} sm={6} md={3}>
+             <Card elevation={3} sx={{ height: '100%', borderRadius: 3, p: 0.5 }}>
+               <CardContent>
+                 <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 13, mb: 1 }}>
+                   {feature.head}
+                 </Typography>
+                 <Typography variant="h5" component="div" sx={{ fontWeight: 700 }}>
+                   {feature.num}
+                 </Typography>
+                 <Typography sx={{ color: 'text.secondary', mb: 1.5 }}>{feature.improve}</Typography>
+                 {feature.icon}
+               </CardContent>
+             </Card>
+           </Grid>
+         ))}
        </Grid>
-    ))}
-
-       </Grid>
-
      </Container>
   )
 }

@@ -6,6 +6,10 @@ import Student_dashboard from "./pages/student_dashboard";
 import GlassAuth from "./pages/glassauth"; // Optional route
 import Login from "./components/Login";
 import Signup from "./components/signup";
+import StudySmartDashboard from "./components/mat_gem";
+import TimetablePage from './components/Time_table';
+import Material_tab from "./components/material_tab";
+
 
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem("access");
@@ -18,7 +22,7 @@ const App = () => {
       <Routes>
         
         <Route path="/" element={<Splash />} />
-
+        <Route path="/upload"  element={<Material_tab/>}/>
      
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />

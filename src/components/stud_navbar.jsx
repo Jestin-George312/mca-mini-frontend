@@ -13,6 +13,13 @@ const Stud_navbar = ({ activeView, setActiveView }) => {
     // Redirect to login
     navigate("/login");
   };
+  const renderNavButton=(label,view)=>(
+  <Button variant={activeView===view?'contained':'outlined'} 
+  onClick={()=>{setActiveView(view)}}
+  >
+  {label}
+  </Button>
+  )
 
   return (
     <AppBar position="sticky" color="default">
@@ -21,22 +28,12 @@ const Stud_navbar = ({ activeView, setActiveView }) => {
           <Typography variant="h6">Student Dashboard</Typography>
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant={activeView === 'home' ? 'contained' : 'outlined'}
-            onClick={() => setActiveView('home')}
-          >
-            Home
-          </Button>
-          <Button
-            variant={activeView === 'overview' ? 'contained' : 'outlined'}
-            onClick={() => setActiveView('overview')}
-          >
-            Overview
-          </Button>
-          <Button onClick={() => setActiveView('materials')}>Materials</Button>
-          <Button onClick={() => setActiveView('schedule')}>Schedule</Button>
-          <Button onClick={() => setActiveView('performance')}>Performance</Button>
-          <Button onClick={() => setActiveView('profile')}>Profile</Button>
+          {renderNavButton('Home', 'home')}
+          {renderNavButton('Overview', 'overview')}
+          {renderNavButton('Materials', 'materials')}
+          {renderNavButton('Schedule', 'schedule')}
+          {renderNavButton('Performance', 'performance')}
+          {renderNavButton('Profile', 'profile')}
 
           {/* 🔹 Logout button */}
           <Button color="error" variant="contained" onClick={handleLogout}>
