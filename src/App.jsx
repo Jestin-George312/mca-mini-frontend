@@ -1,4 +1,6 @@
 import React from "react";
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import getTheme from './theme';
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 import Splash from "./pages/Splash";
@@ -17,29 +19,32 @@ const PrivateRoute = ({ children }) => {
 };
 
 const App = () => {
+  const theme = getTheme('light');
   return (
-    <Router>
-      <Routes>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <Routes>
         
-        <Route path="/" element={<Splash />} />
-        <Route path="/upload"  element={<Material_tab/>}/>
+          <Route path="/" element={<Splash />} />
+          <Route path="/upload"  element={<Material_tab/>}/>
      
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Login />} />
 
-   
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute>
-              <Student_dashboard />
-            </PrivateRoute>
-          }
-        />
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <Student_dashboard />
+              </PrivateRoute>
+            }
+          />
 
-        <Route path="/glassauth" element={<GlassAuth />} />
-      </Routes>
-    </Router>
+          <Route path="/glassauth" element={<GlassAuth />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 };
 
