@@ -23,10 +23,9 @@ import AddIcon from '@mui/icons-material/Add';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { useForm } from 'react-hook-form';
 import { styled } from '@mui/material/styles';
-
-// Corrected import path
 import getTheme from '../theme.js';
 
+// Hidden input for custom file upload button
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
   clipPath: 'inset(50%)',
@@ -39,22 +38,16 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-// --- MOCK DATA ---
-const materialsData = [
-  { title: 'Quantum Physics', subject: 'Physics 401', difficulty: 'Hard', progress: 70 },
-  { title: 'Data Structures', subject: 'CS 201', difficulty: 'Medium', progress: 50 },
-  { title: 'Microeconomics', subject: 'Econ 101', difficulty: 'Easy', progress: 90 },
-  { title: 'Sociology 101', subject: 'Soc 101', difficulty: 'Easy', progress: 100 },
-  { title: 'Art History', subject: 'Art 202', difficulty: 'Medium', progress: 20 },
-];
-
+// ---------------------------
+// Upload File API
+// ---------------------------
 const uploadFile = async (file, subject) => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('subject', subject);
 
   try {
-    const response = await fetch('http://localhost:8000/api/upload', {
+    const response = await fetch('http://localhost:8000/api/upload/', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${localStorage.getItem('access')}`,
@@ -73,42 +66,73 @@ const uploadFile = async (file, subject) => {
   }
 };
 
-// --- MAIN COMPONENT ---
+// ---------------------------
+// MAIN COMPONENT
+// ---------------------------
 export default function StudySmartDashboard() {
   const [currentView, setCurrentView] = useState('materials'); // 'materials' or 'upload'
+  const [materials, setMaterials] = useState([]); // ✅ Dynamic materials from backend
+  const [loading, setLoading] = useState(true);
   const dropzoneRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const { register, handleSubmit, reset, watch } = useForm();
-
   const subject = watch('subject');
 
-  // Handle browser back/forward navigation
+  // ---------------------------
+  // Fetch Materials from Backend
+  // ---------------------------
   useEffect(() => {
-    const handlePopState = (event) => {
-      // Check if we're in upload view and user pressed back
-      if (currentView === 'upload') {
-        setCurrentView('materials');
-        // Prevent the default back navigation
-        event.preventDefault();
-        // Push a new state to maintain the materials view
-        window.history.pushState({ view: 'materials' }, '', window.location.pathname);
+    const fetchMaterials = async () => {
+      try {
+        const token = localStorage.getItem('access');
+        const res = await fetch('http://127.0.0.1:8000/api/upload/list/', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) throw new Error('Failed to fetch materials');
+
+        const data = await res.json();
+        console.log('📄 Materials fetched:', data);
+
+        // Transform backend response if necessary
+        const formatted = data.map((item) => ({
+          id: item.id,
+          title: item.title || item.name || 'Untitled Material',
+          subject: item.subject || 'Unknown Subject',
+          difficulty: item.difficulty || 'Medium',
+          progress: item.progress || 0,
+        }));
+
+        setMaterials(formatted);
+      } catch (error) {
+        console.error(error);
+        alert('Failed to load materials.');
+      } finally {
+        setLoading(false);
       }
     };
 
-    // Add event listener for popstate (back/forward buttons)
-    window.addEventListener('popstate', handlePopState);
+    fetchMaterials();
+  }, [currentView]); // refetch when switching back after upload
 
-    // Cleanup
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
+  // ---------------------------
+  // View Handlers
+  // ---------------------------
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (currentView === 'upload') {
+        setCurrentView('materials');
+        event.preventDefault();
+        window.history.pushState({ view: 'materials' }, '', window.location.pathname);
+      }
     };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, [currentView]);
 
-  // Handle view changes and update browser history
   const handleViewChange = (newView) => {
     setCurrentView(newView);
     if (newView === 'upload') {
-      // Push a new state when going to upload view
       window.history.pushState({ view: 'upload' }, '', window.location.pathname);
     }
   };
@@ -122,6 +146,9 @@ export default function StudySmartDashboard() {
     }
   };
 
+  // ---------------------------
+  // File Upload Handlers
+  // ---------------------------
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) setSelectedFile(file);
@@ -131,7 +158,6 @@ export default function StudySmartDashboard() {
     event.preventDefault();
     event.stopPropagation();
     if (dropzoneRef.current) dropzoneRef.current.style.borderColor = 'grey';
-
     const file = event.dataTransfer.files[0];
     if (file) setSelectedFile(file);
   };
@@ -148,6 +174,9 @@ export default function StudySmartDashboard() {
     if (dropzoneRef.current) dropzoneRef.current.style.borderColor = 'grey';
   };
 
+  // ---------------------------
+  // Form Submit (Upload)
+  // ---------------------------
   const onSubmit = async (data) => {
     if (!selectedFile) {
       alert("Please select a file before uploading.");
@@ -158,22 +187,25 @@ export default function StudySmartDashboard() {
     if (success) {
       reset();
       setSelectedFile(null);
-      setCurrentView('materials'); // Go back to materials list after successful upload
+      setCurrentView('materials'); // Go back to materials list
     }
   };
 
+  // ---------------------------
+  // MATERIALS VIEW
+  // ---------------------------
   const renderMaterialsView = () => (
     <>
-      {/* Title and Upload Button */}
+      {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">Materials</Typography>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          onClick={() => handleViewChange('upload')} 
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleViewChange('upload')}
           startIcon={<AddIcon />}
         >
-          Upload New 
+          Upload New
         </Button>
       </Box>
 
@@ -181,21 +213,21 @@ export default function StudySmartDashboard() {
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 3, mb: 5 }}>
         <Card>
           <CardContent>
-            <Typography variant="h6" component="div" gutterBottom>AI Topic Extraction</Typography>
+            <Typography variant="h6" gutterBottom>AI Topic Extraction</Typography>
             <Typography variant="body2" color="text.secondary">Automatically extract key topics from your PDFs and DOCs.</Typography>
             <Button size="small" sx={{ mt: 2 }}>Try it now</Button>
           </CardContent>
         </Card>
         <Card>
           <CardContent>
-            <Typography variant="h6" component="div" gutterBottom>AI Difficulty Tagging</Typography>
-            <Typography variant="body2" color="text.secondary">Let our AI analyze and tag the difficulty of your materials.</Typography>
+            <Typography variant="h6" gutterBottom>AI Difficulty Tagging</Typography>
+            <Typography variant="body2" color="text.secondary">Let our AI analyze and tag difficulty levels.</Typography>
             <Button size="small" sx={{ mt: 2 }}>Learn more</Button>
           </CardContent>
         </Card>
         <Card>
           <CardContent>
-            <Typography variant="h6" component="div" gutterBottom>AI Note Summarization</Typography>
+            <Typography variant="h6" gutterBottom>AI Note Summarization</Typography>
             <Typography variant="body2" color="text.secondary">Get concise summaries of your study notes instantly.</Typography>
             <Button size="small" sx={{ mt: 2 }}>Summarize notes</Button>
           </CardContent>
@@ -212,57 +244,60 @@ export default function StudySmartDashboard() {
         </Box>
       </Box>
 
-      <TableContainer component={Card}>
-        <Table sx={{ minWidth: 650 }} aria-label="materials table">
-          <TableHead>
-            <TableRow>
-              <TableCell>TITLE</TableCell>
-              <TableCell>SUBJECT</TableCell>
-              <TableCell>DIFFICULTY</TableCell>
-              <TableCell>PROGRESS</TableCell>
-              <TableCell>ACTIONS</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {materialsData.map((row) => (
-              <TableRow key={row.title} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                <TableCell component="th" scope="row">{row.title}</TableCell>
-                <TableCell>{row.subject}</TableCell>
-                <TableCell>
-                  <Chip label={row.difficulty} color={getDifficultyColor(row.difficulty)} size="small" />
-                </TableCell>
-                <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <LinearProgress variant="determinate" value={row.progress} sx={{ width: '80%', mr: 1, height: 8, borderRadius: 5 }} />
-                    <Typography variant="body2" color="text.secondary">{`${row.progress}%`}</Typography>
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Button variant="text" size="small">View</Button>
-                </TableCell>
+      {loading ? (
+        <Typography>Loading materials...</Typography>
+      ) : materials.length === 0 ? (
+        <Typography color="text.secondary">No materials found.</Typography>
+      ) : (
+        <TableContainer component={Card}>
+          <Table sx={{ minWidth: 650 }}>
+            <TableHead>
+              <TableRow>
+                <TableCell>TITLE</TableCell>
+                <TableCell>SUBJECT</TableCell>
+                <TableCell>DIFFICULTY</TableCell>
+                <TableCell>PROGRESS</TableCell>
+                <TableCell>ACTIONS</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {materials.map((row) => (
+                <TableRow key={row.id || row.title} hover>
+                  <TableCell>{row.title}</TableCell>
+                  <TableCell>{row.subject}</TableCell>
+                  <TableCell>
+                    <Chip label={row.difficulty} color={getDifficultyColor(row.difficulty)} size="small" />
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <LinearProgress variant="determinate" value={row.progress} sx={{ width: '80%', mr: 1, height: 8, borderRadius: 5 }} />
+                      <Typography variant="body2" color="text.secondary">{`${row.progress}%`}</Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="text" size="small">View</Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
     </>
   );
 
+  // ---------------------------
+  // UPLOAD VIEW
+  // ---------------------------
   const renderUploadView = () => (
     <>
-      {/* Back Button and Title */}
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <Button 
-          variant="outlined" 
-          onClick={() => setCurrentView('materials')}
-          sx={{ mr: 2 }}
-        >
+        <Button variant="outlined" onClick={() => setCurrentView('materials')} sx={{ mr: 2 }}>
           ← Back to Materials
         </Button>
         <Typography variant="h4">Upload New Material</Typography>
       </Box>
 
-      {/* Upload Form */}
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
           <Paper sx={{ padding: 2 }}>
@@ -283,9 +318,7 @@ export default function StudySmartDashboard() {
                   padding: 2,
                   textAlign: 'center',
                   marginTop: 1,
-                  '&:hover': {
-                    borderColor: 'primary.main',
-                  },
+                  '&:hover': { borderColor: 'primary.main' },
                 }}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -293,7 +326,7 @@ export default function StudySmartDashboard() {
               >
                 <UploadFileIcon sx={{ fontSize: 40 }} />
                 <Typography>
-                  {selectedFile ? `File Selected: ${selectedFile.name}` : 'Drag & drop your PDFs or click to upload'}
+                  {selectedFile ? `File Selected: ${selectedFile.name}` : 'Drag & drop or click to upload'}
                 </Typography>
                 <Button component="label" variant="contained" sx={{ marginTop: 1 }}>
                   Choose Files
@@ -304,7 +337,7 @@ export default function StudySmartDashboard() {
                   />
                 </Button>
                 <Typography variant="caption" sx={{ display: 'block', marginTop: 1 }}>
-                  Supports PDF, DOC, DOCX files up to 10MB
+                  Supports PDF, DOC, DOCX up to 10MB
                 </Typography>
               </Box>
 

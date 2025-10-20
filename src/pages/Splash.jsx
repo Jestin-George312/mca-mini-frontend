@@ -7,6 +7,7 @@ import getTheme from '../theme';
 import Splash_navbar from '../components/splash_navbar';
 import Hero1_splash from '../components/hero1_splash';
 import Hero_features from '../components/hero_features';
+import Landingpage from '../components/landingpaage';
 
 const Splash = () => {
   // 2. Manage the theme mode state ('light' or 'dark')
@@ -38,8 +39,8 @@ const Splash = () => {
         
         {/* Your main content sections */}
         <main>
-          <Hero1_splash />
-          <Hero_features />
+          <Landingpage />
+         
         </main>
       </Box>
     </ThemeProvider>

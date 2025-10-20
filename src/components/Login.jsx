@@ -60,7 +60,7 @@ const Login = () => {
         </Typography>
 
         <Stack spacing={2}>
-          <TextField label="Email" type="text" fullWidth  autoComplete="email"{...register('email', { required: 'Email is required' })}
+          <TextField label="username" type="text" fullWidth  autoComplete="email"{...register('email', { required: 'username is required' })}
             error={!!errors.email}
             helperText={errors.email?.message}
           />
