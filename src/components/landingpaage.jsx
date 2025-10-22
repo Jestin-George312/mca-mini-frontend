@@ -1,8 +1,10 @@
 import React from 'react';
 import { Typography, Button, Box } from '@mui/material';
+import { useNavigate } from 'react-router-dom'
 
 // Main App Component
 export default function Landingpage() {
+  const navigate = useNavigate();
   return (
     <Box sx={{ 
       minHeight: '100vh', 
@@ -50,7 +52,7 @@ export default function Landingpage() {
           </Typography>
           <Button
             variant="contained"
-            size="large"
+            size="large" onClick={()=>navigate('/login')}
             sx={{
               marginTop: '32px', // mt-8
               backgroundColor: '#2563EB', // bg-blue-600

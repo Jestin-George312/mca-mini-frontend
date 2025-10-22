@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -8,39 +8,126 @@ import {
   InputLabel,
   Button,
   Paper,
+  CircularProgress,
 } from '@mui/material';
-import QuizComponent from './quizcomponent'; // Make sure this path is correct
+import QuizComponent from './quizcomponent';
+import { useNavigate } from 'react-router-dom';
 
 const Quiz_Material = () => {
-  const [subject, setSubject] = useState('');
-  const [selectedTopic, setSelectedTopic] = useState('');
+  const [availableMaterials, setAvailableMaterials] = useState([]);
+  const [selectedMaterialId, setSelectedMaterialId] = useState('');
+  const [availableTopics, setAvailableTopics] = useState([]); // This will now hold an array of OBJECTS
   
-  // 1. Add state to track if the quiz has started
+  // --- CHANGED ---
+  // We now store the Topic ID (an integer), not the name (a string)
+  const [selectedTopicId, setSelectedTopicId] = useState('');
+  // --- END CHANGE ---
+
+  const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const [quizStarted, setQuizStarted] = useState(false);
 
-  const handleSubjectChange = (event) => {
-    setSubject(event.target.value);
-  };
+  const navigate = useNavigate();
 
-  const handleTopicChange = (event) => {
-    setSelectedTopic(event.target.value);
-  };
+  // Fetch materials on mount (This part is correct)
+  useEffect(() => {
+    const fetchMaterials = async () => {
+      try {
+        const token = localStorage.getItem('access');
+        const res = await fetch('http://127.0.0.1:8000/api/upload/list/', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-  const topicList = [
-    { name: 'algebra', label: 'Algebra' },
-    { name: 'geometry', label: 'Geometry' },
-    { name: 'trigonometry', label: 'Trigonometry' },
-    { name: 'calculus', label: 'Calculus' },
-  ];
+        if (res.status === 401) {
+          console.error('Authorization failed. Token is invalid or expired.');
+          localStorage.removeItem('access');
+          navigate('/login', { replace: true });
+          return;
+        }
 
-  // 2. Conditionally render the QuizComponent if the quiz has started
+        if (!res.ok) throw new Error('Failed to fetch materials');
+        const data = await res.json();
+        setAvailableMaterials(data);
+      } catch (error) {
+        console.error(error);
+        alert('Failed to load study materials. Please try again.');
+      }
+    };
+    fetchMaterials();
+  }, [navigate]);
+
+  // Fetch topics when material is selected
+  useEffect(() => {
+    if (!selectedMaterialId) {
+      setAvailableTopics([]);
+      return;
+    }
+
+    const fetchTopics = async () => {
+      setIsLoadingTopics(true);
+      // --- CHANGED ---
+      setSelectedTopicId(''); // Reset the ID
+      // --- END CHANGE ---
+      setAvailableTopics([]);
+
+      try {
+        const token = localStorage.getItem('access');
+        const res = await fetch(
+          `http://127.0.0.1:8000/topic-analysis/topics/${selectedMaterialId}/`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (res.status === 401) {
+          // (Error handling is correct)
+          console.error('Authorization failed for topics.');
+          localStorage.removeItem('access');
+          navigate('/login', { replace: true });
+          return;
+        }
+
+        if (!res.ok) throw new Error('Failed to fetch topics');
+        const data = await res.json();
+
+        console.log('API Response for Topics:', data);
+
+        // --- CHANGED ---
+        // We get the array of objects from data.topics
+        const topicsList = data.topics;
+
+        // We store the ENTIRE array of objects in state
+        if (Array.isArray(topicsList)) {
+          setAvailableTopics(topicsList);
+        } else {
+          setAvailableTopics([]);
+        }
+        // --- END CHANGE ---
+
+      } catch (error) {
+        console.error(error);
+        alert('Failed to load topics for this material.');
+      } finally {
+        setIsLoadingTopics(false);
+      }
+    };
+
+    fetchTopics();
+  }, [selectedMaterialId, navigate]);
+
+  const handleMaterialChange = (event) => setSelectedMaterialId(event.target.value);
+  
+  // --- CHANGED ---
+  // This handler now saves the Topic ID
+  const handleTopicChange = (event) => setSelectedTopicId(event.target.value);
+  // --- END CHANGE ---
+
   if (quizStarted) {
-    // You could pass subject and selectedTopic as props here if needed
-    // e.g., <QuizComponent subject={subject} topic={selectedTopic} />
-    return <QuizComponent />;
+    // --- CHANGED ---
+    // We pass the topicId to the QuizComponent
+    return <QuizComponent topicId={selectedTopicId} />;
+    // --- END CHANGE ---
   }
 
-  // Otherwise, render the setup form
   return (
     <Box
       sx={{
@@ -65,64 +152,85 @@ const Quiz_Material = () => {
           Welcome!
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-          Select a subject and topics to start your quiz.
+          Select a material and topic to start your quiz.
         </Typography>
 
-        {/* Subject Dropdown */}
         <FormControl fullWidth sx={{ mb: 3 }}>
-          <InputLabel id="subject-select-label">Subject</InputLabel>
+          <InputLabel id="material-select-label">Material</InputLabel>
           <Select
-            labelId="subject-select-label"
-            id="subject-select"
-            value={subject}
-            label="Subject"
-            onChange={handleSubjectChange}
+            labelId="material-select-label"
+            id="material-select"
+            value={selectedMaterialId}
+            label="Material"
+            onChange={handleMaterialChange}
           >
             <MenuItem value="">
-              <em>Select a subject</em>
+              <em>Select a material</em>
             </MenuItem>
-            <MenuItem value={'math'}>Mathematics</MenuItem>
-            <MenuItem value={'science'}>Science</MenuItem>
-            <MenuItem value={'history'}>History</MenuItem>
-          </Select>
-        </FormControl>
-
-        {/* Topics Dropdown */}
-        <FormControl fullWidth>
-          <InputLabel id="topic-select-label">Topics</InputLabel>
-          <Select
-            labelId="topic-select-label"
-            id="topic-select"
-            value={selectedTopic}
-            label="Topics"
-            onChange={handleTopicChange}
-          >
-            <MenuItem value="">
-                <em>Select a topic</em>
-            </MenuItem>
-            {topicList.map((topic) => (
-              <MenuItem key={topic.name} value={topic.name}>
-                {topic.label}
+            {availableMaterials.map((material) => (
+              <MenuItem key={material.id} value={material.id}>
+                {material.subject || material.name}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
 
-        {/* Start Button */}
+        <FormControl
+          fullWidth
+          disabled={!selectedMaterialId || isLoadingTopics}
+          sx={{ position: 'relative' }}
+        >
+          <InputLabel id="topic-select-label">Topic</InputLabel>
+          <Select
+            labelId="topic-select-label"
+            id="topic-select"
+            // --- CHANGED ---
+            value={selectedTopicId} // Value is now the ID
+            label="Topic"
+            onChange={handleTopicChange} // Uses the new handler
+            // --- END CHANGE ---
+          >
+            <MenuItem value="">
+              <em>{isLoadingTopics ? 'Loading...' : 'Select a topic'}</em>
+            </MenuItem>
+            {/* --- CHANGED --- */}
+            {/* We map over the array of objects */}
+            {/* The 'key' and 'value' are the topic.id */}
+            {/* The text shown to the user is topic.topic_name */}
+            {availableTopics.map((topic) => (
+              <MenuItem key={topic.id} value={topic.id}>
+                {topic.topic_name || topic.name || topic.topic}
+              </MenuItem>
+            ))}
+            {/* --- END CHANGE --- */}
+          </Select>
+          {isLoadingTopics && (
+            <CircularProgress
+              size={24}
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                right: 16,
+                marginTop: '-12px',
+              }}
+            />
+          )}
+        </FormControl>
+
         <Button
           variant="contained"
           fullWidth
-          // 3. Update the onClick handler to set the state
-          onClick={() => setQuizStarted(true)} 
+          onClick={() => setQuizStarted(true)}
+          // --- CHANGED ---
+          disabled={!selectedMaterialId || !selectedTopicId || isLoadingTopics} // Now checks for topic ID
+          // --- END CHANGE ---
           sx={{
             mt: 4,
             py: 1.5,
             fontSize: '1rem',
             borderRadius: 2,
             backgroundColor: '#00aaff',
-            '&:hover': {
-              backgroundColor: '#0088cc',
-            },
+            '&:hover': { backgroundColor: '#0088cc' },
           }}
         >
           Start Quiz

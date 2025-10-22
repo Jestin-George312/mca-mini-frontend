@@ -21,6 +21,7 @@ export default function StudySubject({ onBack }) {
     const [availableMaterials, setAvailableMaterials] = useState([]);
     const [showPlan, setShowPlan] = useState(false);
     const [planData, setPlanData] = useState(null);
+    const [isLoading, setIsLoading] = useState(false); // ✅ Add loading state
 
     const { handleSubmit, control, watch, setValue } = useForm({
         defaultValues: {
@@ -70,7 +71,8 @@ export default function StudySubject({ onBack }) {
         setValue('selectedMaterials', newSelection);
     };
 
-    const onFormSubmit = (data) => {
+    // ✅ MODIFIED: This function now calls your backend API
+    const onFormSubmit = async (data) => {
         const material_ids = data.selectedMaterials.filter(id => id !== null);
 
         if (material_ids.length !== data.numSubjects) {
@@ -78,33 +80,43 @@ export default function StudySubject({ onBack }) {
             return;
         }
 
-        // Get the selected materials
-        const selectedMats = material_ids.map(id => availableMaterials.find(m => m.id === id));
+        setIsLoading(true); // ✅ Start loading
 
-        // Build the study plan
-        const totalDays = data.totalDays;
-        const hoursPerDay = data.hoursPerDay;
-
-        const study_plan = [];
-        for (let day = 1; day <= totalDays; day++) {
-            const subjectIndex = (day - 1) % selectedMats.length;
-            const mat = selectedMats[subjectIndex];
-
-            study_plan.push({
-                day: day,
-                focus_subject: mat.subject,
-                topics: mat.title,
-                notes: `Study for ${hoursPerDay} hour(s). Take short breaks and review previous topics!`
+        try {
+            const token = localStorage.getItem('access');
+            const body = JSON.stringify({
+                material_ids: material_ids,
+                totalDays: data.totalDays,
+                hoursPerDay: data.hoursPerDay
             });
+
+            const res = await fetch('http://127.0.0.1:8000/api/timetable/generate-plan/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: body
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Failed to generate plan from backend.');
+            }
+
+            // The backend returns the generated plan
+            const generatedPlan = await res.json();
+
+            // Set this data, which plan.jsx will receive
+            setPlanData(generatedPlan); 
+            setShowPlan(true);
+
+        } catch (error) {
+            console.error(error);
+            alert(`Error: ${error.message}`);
+        } finally {
+            setIsLoading(false); // ✅ Stop loading
         }
-
-        setPlanData({
-            totalDays,
-            hoursPerDay,
-            study_plan
-        });
-
-        setShowPlan(true);
     };
 
     return (
@@ -207,8 +219,14 @@ export default function StudySubject({ onBack }) {
                                     />
                                 ))}
 
-                                <Button type="submit" variant="contained" sx={{ mt: 3 }}>
-                                    Generate Plan
+                                {/* ✅ MODIFIED: Button shows loading state */}
+                                <Button 
+                                    type="submit" 
+                                    variant="contained" 
+                                    sx={{ mt: 3 }}
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? "Generating..." : "Generate Plan"}
                                 </Button>
                             </Box>
                         </CardContent>

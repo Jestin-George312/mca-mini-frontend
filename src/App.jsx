@@ -28,8 +28,28 @@ const App = () => {
         <Routes>
         
           <Route path="/" element={<Splash />} />
-          <Route path="/upload"  element={<Material_tab/>}/>
-     <Route path="/quiz" element={<Quiz_Material />} />
+          
+          {/* CONSIDER: Should this be private too?
+            <Route path="/upload" element={<Material_tab/>}/> 
+          */}
+          <Route path="/upload" element={
+              <PrivateRoute>
+                <Material_tab/>
+              </PrivateRoute>
+            } />
+
+          {/* --- MODIFIED SECTION --- */}
+          {/* This route is now protected. */}
+          <Route 
+            path="/quiz" 
+            element={
+              <PrivateRoute>
+                <Quiz_Material />
+              </PrivateRoute>
+            } 
+          />
+          {/* --- END MODIFIED SECTION --- */}
+
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
 

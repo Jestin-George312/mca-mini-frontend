@@ -32,7 +32,7 @@ const splash_navbar = () => {
             <Button variant="contained" color="success" onClick={()=>navigate('/signup')} >
              Signup
            </Button>
-           <Button variant="contained" color="success" href='#signup'>
+           <Button variant="contained" color="success" onClick={()=>navigate('/signup')}>
              Get Started
            </Button>
         </Box>

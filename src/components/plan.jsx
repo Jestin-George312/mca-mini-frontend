@@ -1,3 +1,5 @@
+// plan.jsx
+
 import React from 'react';
 import {
   Box,
@@ -16,20 +18,25 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 export default function Plan({ planData, onBack }) {
   /**
-   * planData example (from Gemini API):
+   * ✅ NEW planData example:
    * {
-   *   study_plan: [
-   *     { day: 1, focus_subject: 'AI', topics: 'Intro to ML', notes: 'Use Pomodoro' },
-   *     { day: 2, focus_subject: 'Mathematics', topics: 'Calculus Chapter 1', notes: 'Review previous notes' },
-   *     ...
-   *   ]
+   * "study_plan": [
+   * {
+   * "day": 1,
+   * "tasks": [
+   * { "duration": "2 hours", "subject": "AI", "topics": "...", "notes": "..." },
+   * { "duration": "1 hour", "subject": "SQL", "topics": "...", "notes": "..." }
+   * ]
+   * },
+   * { "day": 2, "tasks": [...] }
+   * ]
    * }
    */
 
-  if (!planData || !planData.study_plan) {
+  if (!planData || !planData.study_plan || planData.study_plan.length === 0) {
     return (
       <Box sx={{ p: 4 }}>
-        <Typography>No study plan found.</Typography>
+        <Typography>No study plan found or plan is empty.</Typography>
         <Button variant="outlined" onClick={onBack}>Back</Button>
       </Box>
     );
@@ -43,36 +50,46 @@ export default function Plan({ planData, onBack }) {
         </Button>
       </Box>
 
-      <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-        <CardContent sx={{ p: 4 }}>
-          <Typography variant="h5" component="h2" sx={{ fontWeight: 'bold', mb: 3 }}>
-            Your Generated Study Plan
-          </Typography>
+      <Typography variant="h5" component="h2" sx={{ fontWeight: 'bold', mb: 3 }}>
+        Your Generated Study Plan
+      </Typography>
 
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Day</TableCell>
-                  <TableCell>Focus Subject</TableCell>
-                  <TableCell>Topics</TableCell>
-                  <TableCell>Notes</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {planData.study_plan.map((dayPlan) => (
-                  <TableRow key={dayPlan.day}>
-                    <TableCell>{dayPlan.day}</TableCell>
-                    <TableCell>{dayPlan.focus_subject}</TableCell>
-                    <TableCell>{dayPlan.topics}</TableCell>
-                    <TableCell>{dayPlan.notes}</TableCell>
+      {planData.study_plan.map((dayPlan) => (
+        <Card key={dayPlan.day} sx={{ mb: 3, borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+            
+            <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold', mb: 2 }}>
+              Day {dayPlan.day}
+            </Typography>
+
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    {/* ✅ Changed "Time" to "Duration" */}
+                    <TableCell sx={{ fontWeight: 'bold' }}>Duration</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Subject</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Topics</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Notes</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
+                </TableHead>
+                <TableBody>
+                  {dayPlan.tasks.map((task, index) => (
+                    <TableRow key={index}>
+                      {/* ✅ Changed task.time_range to task.duration */}
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{task.duration}</TableCell>
+                      <TableCell>{task.subject}</TableCell>
+                      <TableCell>{task.topics}</TableCell>
+                      <TableCell>{task.notes}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+          </CardContent>
+        </Card>
+      ))}
     </Box>
   );
 }

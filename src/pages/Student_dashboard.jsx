@@ -8,7 +8,7 @@ import Mat_gem from '../components/mat_gem';
 import TimetablePage from '../components/Time_table';
 import Performance from '../components/Performance';
 import Profile from '../components/Profile';
-
+import PreviousQuizScores from '../components/previous_quizscores';
 const StudentDashboard = () => {
   const [activeView, setActiveView] = useState('home');
 
@@ -17,7 +17,7 @@ const StudentDashboard = () => {
       <Stud_navbar activeView={activeView} setActiveView={setActiveView} />
 
       {activeView === 'home' && <Home />}
-      {activeView === 'overview' && <Overview />}
+      {activeView === 'overview' && <PreviousQuizScores />}
       {activeView==='materials' && <Mat_gem/>}
       {activeView==='schedule' && <TimetablePage/>}
       {activeView==='performance' && <Performance/>}
