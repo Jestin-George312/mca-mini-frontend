@@ -16,11 +16,11 @@ const splash_navbar = () => {
   const theme=useTheme()
   return (
     <div>
-      <AppBar  color="secondary" sx={{position:"sticky",top:0}}>
+      <AppBar  color="primary" sx={{position:"sticky",top:0}}>
        <Container  maxWidth={false}>
            <Toolbar sx={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <Typography variant="h4">
-            hello
+            
           </Typography>
           <Box sx={{ width:"40%",display:"flex",justifyContent:'space-evenly'}}>
             <Button variant="contained" color="success"   href='#home'>

@@ -1,80 +1,92 @@
-import React from 'react';
-import { TextField, Button, Stack, Typography, Box } from '@mui/material';
+import React, { useState } from 'react'; // <-- 1. IMPORT useState
+import { TextField, Button, Stack, Typography, Box, Alert } from '@mui/material'; // <-- 1. IMPORT Alert
 import { useForm } from 'react-hook-form';
 
 const Login = () => {
-  const { register,handleSubmit,formState: { errors }} = useForm({
-    defaultValues: {
-      email: '',
-      password: ''
-    }
-  });
+ const { register,handleSubmit,formState: { errors }} = useForm({
+  defaultValues: {
+ email: '',
+ password: ''
+}
+ });
 
-  /*const onSubmit = (data) => {
-    console.log('Login data:', data);
-  };*/
+  // 2. Initialize error state
+  const [loginError, setLoginError] = useState('');
 
-   const onSubmit = async (data) => {
-    try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/login/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          username: data.email,
-          password: data.password
-        })
-      });
+ /*const onSubmit = (data) => {
+    console.log('Login data:', data);
+  };*/
 
-      const result = await response.json();
-      if (response.ok) {
-        console.log('Login successful:', result);
+const onSubmit = async (data) => {
+    setLoginError(''); // Clear previous errors on submit
+ try {
+const response = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+  method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json'
+ },
+ body: JSON.stringify({
+username: data.email,
+password: data.password
+})
+ });
 
-        // Save tokens
-        localStorage.setItem('access', result.access);
-        localStorage.setItem('refresh', result.refresh);
+ const result = await response.json();
+ if (response.ok) {
+ console.log('Login successful:', result);
 
-        // Optional: redirect after login
-         window.location.href = "/dashboard";
-      } else {
-        console.error('Login error:', result);
-      }
-    } catch (error) {
-      console.error('Network error:', error);
-    }
-  };
+ // Save tokens
+ localStorage.setItem('access', result.access);
+ localStorage.setItem('refresh', result.refresh);
 
-  return (
-    <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh" bgcolor="#f5f5f5" >
-      <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate
-        sx={{
-          p: 4,
-          borderRadius: 2,
-          boxShadow: 3,
-          bgcolor: 'white',
-          width: 400
-        }}>
-        <Typography variant="h5" mb={3} textAlign="center">
-          Login
-        </Typography>
+// Optional: redirect after login
+window.location.href = "/dashboard";
+} else {
+ console.error('Login error:', result);
 
-        <Stack spacing={2}>
-          <TextField label="username" type="text" fullWidth  autoComplete="email"{...register('email', { required: 'username is required' })}
-            error={!!errors.email}
-            helperText={errors.email?.message}
-          />
+// 3. Set error state from API
+        setLoginError(result.detail || 'Invalid username or password.'); 
+ }
+} catch (error) {
+ console.error('Network error:', error);
+      // 3. Set network error state
+      setLoginError('Network error. Please try again later.');
+ }
+ };
 
-          <TextField label="Password" type="password" fullWidth autoComplete="current-password" {...register('password', { required: 'Password is required' })}
-            error={!!errors.password}
-            helperText={errors.password?.message}
-          />
+ return (
+ <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh" bgcolor="#f5f5f5" >
+ <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate
+ sx={{
+ p: 4,
+ borderRadius: 2,
+ boxShadow: 3,
+bgcolor: 'white',
+ width: 400
+}}>
+ <Typography variant="h5" mb={3} textAlign="center">
+ Login
+ </Typography>
 
-          <Button type="submit" variant="contained" color="primary" fullWidth> Login</Button>
-        </Stack>
-      </Box>
-    </Box>
-  );
+<Stack spacing={2}>
+          {/* 4. Conditionally render the Alert component */}
+          {loginError && <Alert severity="error">{loginError}</Alert>}
+
+ <TextField label="username" type="text" fullWidth  autoComplete="email"{...register('email', { required: 'username is required' })}
+ error={!!errors.email}
+ helperText={errors.email?.message}
+ />
+
+ <TextField label="Password" type="password" fullWidth autoComplete="current-password" {...register('password', { required: 'Password is required' })}
+ error={!!errors.password}
+helperText={errors.password?.message}
+ />
+
+ 	 <Button type="submit" variant="contained" color="primary" fullWidth> Login</Button>
+ 	  </Stack>
+ 	  </Box>
+ 	</Box>
+);
 };
 
 export default Login;

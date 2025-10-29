@@ -28,12 +28,15 @@ const Stud_navbar = ({ activeView, setActiveView }) => {
           <Typography variant="h6">Student Dashboard</Typography>
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
+          
           {renderNavButton('Home', 'home')}
+          {renderNavButton('Quiz', 'quiz')}
           {renderNavButton('Overview', 'overview')}
           {renderNavButton('Materials', 'materials')}
           {renderNavButton('Schedule', 'schedule')}
           {renderNavButton('Performance', 'performance')}
           {renderNavButton('Profile', 'profile')}
+          
 
           {/* 🔹 Logout button */}
           <Button color="error" variant="contained" onClick={handleLogout}>

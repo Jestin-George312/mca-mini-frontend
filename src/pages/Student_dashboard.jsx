@@ -9,13 +9,14 @@ import TimetablePage from '../components/Time_table';
 import Performance from '../components/Performance';
 import Profile from '../components/Profile';
 import PreviousQuizScores from '../components/previous_quizscores';
+import Quiz_Material from "../components/quiz_material";
 const StudentDashboard = () => {
   const [activeView, setActiveView] = useState('home');
 
   return (
     <div style={{ alignItems: 'center' }}>
       <Stud_navbar activeView={activeView} setActiveView={setActiveView} />
-
+      {activeView === 'quiz' && <Quiz_Material />}
       {activeView === 'home' && <Home />}
       {activeView === 'overview' && <PreviousQuizScores />}
       {activeView==='materials' && <Mat_gem/>}

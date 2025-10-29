@@ -1,8 +1,10 @@
 import React from 'react';
 import { TextField, Button, Stack, Typography, Box } from '@mui/material';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom'; // <-- 1. IMPORT
 
 const Signup = () => {
+  const navigate = useNavigate(); // <-- 2. INITIALIZE
   const {
     register,
     handleSubmit,
@@ -19,34 +21,33 @@ const Signup = () => {
 
   const password = watch('password');
 
-  /*const onSubmit = (data) => {
-    console.log('Signup data:', data);
-  };*/
   const onSubmit = async (data) => {
-  try {
-    const response = await fetch('http://127.0.0.1:8000/api/auth/signup/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        username: data.name,
-        email: data.email,
-        password: data.password 
-      })
-    });
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/auth/signup/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: data.name,
+          email: data.email,
+          password: data.password
+        })
+      });
 
-    const result = await response.json();
-    if (response.ok) {
-      console.log('Signup successful:', result);
-      // Optionally redirect or show success message
-    } else {
-      console.error('Signup error:', result);
+      const result = await response.json();
+      if (response.ok) {
+        console.log('Signup successful:', result);
+        navigate('/login'); // <-- 3. REDIRECT ON SUCCESS
+      } else {
+        console.error('Signup error:', result);
+        // You might want to set an error state here to show the user
+      }
+    } catch (error) {
+      console.error('Network error:', error);
+      // Handle network errors
     }
-  } catch (error) {
-    console.error('Network error:', error);
-  }
-};
+  };
 
   return (
     <Box
@@ -76,7 +77,7 @@ const Signup = () => {
           <TextField
             label="Name"
             fullWidth
-          //   autoComplete="name"
+            //   autoComplete="name"
             {...register('name', { required: 'Name is required' })}
             error={!!errors.name}
             helperText={errors.name?.message}
@@ -86,7 +87,7 @@ const Signup = () => {
             label="Email"
             type="email"
             fullWidth
-         //   autoComplete="email"
+            //   autoComplete="email"
             {...register('email', { required: 'Email is required' })}
             error={!!errors.email}
             helperText={errors.email?.message}
@@ -96,7 +97,7 @@ const Signup = () => {
             label="Password"
             type="password"
             fullWidth
-          //  autoComplete="new-password"
+            //  autoComplete="new-password"
             {...register('password', {
               required: 'Password is required',
               minLength: {
@@ -112,7 +113,7 @@ const Signup = () => {
             label="Confirm Password"
             type="password"
             fullWidth
-           // autoComplete="new-password"
+            // autoComplete="new-password"
             {...register('confirmPassword', {
               required: 'Please confirm your password',
               validate: (value) =>

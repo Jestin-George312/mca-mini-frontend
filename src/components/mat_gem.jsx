@@ -67,6 +67,39 @@ const uploadFile = async (file, subject) => {
 };
 
 // ---------------------------
+// Delete File API
+// ---------------------------
+const deleteMaterialAPI = async (materialId) => {
+  try {
+    const response = await fetch(`http://localhost:8000/api/upload/delete/${materialId}/`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('access')}`,
+      },
+    });
+
+    // 204 No Content is a successful delete response
+    if (response.status === 204) {
+      console.log('✅ File deleted successfully');
+      return true; // Success
+    }
+    
+    if (!response.ok) {
+      // Try to parse error message from backend
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+    
+    return true; // Also success if status is 200 OK
+
+  } catch (error) {
+    console.error('❌ Delete failed:', error);
+    alert(`Delete failed: ${error.message}`); // Show error to user
+    return false;
+  }
+};
+
+// ---------------------------
 // MAIN COMPONENT
 // ---------------------------
 export default function StudySmartDashboard() {
@@ -94,13 +127,14 @@ export default function StudySmartDashboard() {
         const data = await res.json();
         console.log('📄 Materials fetched:', data);
 
-        // Transform backend response if necessary
+        // Transform backend response
         const formatted = data.map((item) => ({
           id: item.id,
           title: item.title || item.name || 'Untitled Material',
           subject: item.subject || 'Unknown Subject',
           difficulty: item.difficulty || 'Medium',
           progress: item.progress || 0,
+          view_url: item.view_url || null, // <-- Includes the view_url
         }));
 
         setMaterials(formatted);
@@ -114,6 +148,26 @@ export default function StudySmartDashboard() {
 
     fetchMaterials();
   }, [currentView]); // refetch when switching back after upload
+
+  // ---------------------------
+  // Delete Handler
+  // ---------------------------
+  const handleDelete = async (materialId) => {
+    // 1. Confirm with the user
+    if (!window.confirm("Are you sure you want to delete this material? This action cannot be undone.")) {
+      return;
+    }
+
+    // 2. Call the API
+    const success = await deleteMaterialAPI(materialId);
+
+    // 3. If successful, update the UI by removing the item from state
+    if (success) {
+      setMaterials(currentMaterials =>
+        currentMaterials.filter(material => material.id !== materialId)
+      );
+    }
+  };
 
   // ---------------------------
   // View Handlers
@@ -256,7 +310,7 @@ export default function StudySmartDashboard() {
                 <TableCell>TITLE</TableCell>
                 <TableCell>SUBJECT</TableCell>
                 <TableCell>DIFFICULTY</TableCell>
-                <TableCell>PROGRESS</TableCell>
+                
                 <TableCell>ACTIONS</TableCell>
               </TableRow>
             </TableHead>
@@ -268,14 +322,27 @@ export default function StudySmartDashboard() {
                   <TableCell>
                     <Chip label={row.difficulty} color={getDifficultyColor(row.difficulty)} size="small" />
                   </TableCell>
+                 
                   <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <LinearProgress variant="determinate" value={row.progress} sx={{ width: '80%', mr: 1, height: 8, borderRadius: 5 }} />
-                      <Typography variant="body2" color="text.secondary">{`${row.progress}%`}</Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="text" size="small">View</Button>
+                    <Button 
+                      variant="text" 
+                      size="small"  
+                      href={row.view_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      disabled={!row.view_url} 
+                    >
+                      View
+                    </Button>
+                    <Button
+                      variant="text"
+                      size="small"
+                      color="error" // Makes the button red
+                      onClick={() => handleDelete(row.id)} // Calls delete handler
+                      sx={{ ml: 1 }}
+                    >
+                      Delete
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
